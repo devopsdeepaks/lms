@@ -2,7 +2,8 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { Outfit } from "next/font/google";
 import "tailwindcss";
-import { ClerkProvider } from "@clerk/nextjs";
+// import { ClerkProvider } from "@clerk/nextjs";
+import ClerkLayout from "./components/clerklayout";
 import Provider from "./provider";
 
 export const metadata = {
@@ -12,17 +13,12 @@ export const metadata = {
 const outfit = Outfit({ subsets: ["latin"] });
 export default function RootLayout({ children }) {
   return (
-    <ClerkProvider>
-    <html lang="en">
-      <body className={outfit.className}>
-
-        <Provider>
-        {children}
-        </Provider>
+    <ClerkLayout>
+      <html lang="en">
+        <body className={outfit.className}>
+          <Provider>{children}</Provider>
         </body>
-    </html>
-    </ClerkProvider>
+      </html>
+    </ClerkLayout>
   );
 }
-
-
