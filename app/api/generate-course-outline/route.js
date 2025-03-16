@@ -1,28 +1,62 @@
 import { courseOutline } from "@/configs/AiModel";
 import { STUDY_MATERIAL_TABLE } from "@/configs/schema";
+import { db } from "@/configs/db"; // Ensure correct import
 import { NextResponse } from "next/server";
 
 export async function POST(req) {
+  try {
+    const { courseId, topic, courseType, difficultyLevel, createdBy } =
+      await req.json();
+    if (!courseId || !courseType || !topic || !difficultyLevel || !createdBy) {
+      return NextResponse.json(
+        { error: "Missing required fields" },
+        { status: 400 }
+      );
+    }
+    // console.log("course ka type", courseType);
+    // console.log("course ka id", courseId);
+    // console.log("course ka topic", topic);
+    // console.log("course ka difficulty level", difficultyLevel);
+    // console.log("course ka created by", createdBy);
+    const PROMPT = `Generate a study material for ${topic} for ${courseType} and ${courseId} and ${difficultyLevel} and ${createdBy}`;
+    // Generate course layout using AI
+    const aiResp = await courseOutline.sendMessage(PROMPT);
+    const aiText = await aiResp.response.text();
+    // console.log("ye hi wala aaya hai", aiText);
 
-    const{courseId,topic,courseType,difficultyLevel,createdBy}=await req.json();
+    let aiResult;
+    try {
+      aiResult = JSON.parse(aiText);
+    } catch (error) {
+      console.error("AI Response Parsing Error:", error);
+      return NextResponse.json(
+        { error: "Invalid AI response format" },
+        { status: 500 }
+      );
+    }
 
+    // Save to database
+    console.log("Database Insert Started...");
+    const dbResult = await db
+      .insert(STUDY_MATERIAL_TABLE)
+      .values({
+        courseId,
+        courseType,
+        createdBy,
+        difficultyLevel,
+        topic,
+        courseLayout: aiResult,
+      })
+      .returning();
 
-    const PROMPT='generate a study material for '+topic+' for'+courseType+'and '+courseId+'and'+difficultyLevel+'and'+createdBy+'and'
-    //generate course layout using ai
-    const aiResp=await courseOutline.sendMessage(PROMPT)
-    const aiResult=JSON.parse(aiResp.response.text());
+    console.log("Database Insert Successful:", dbResult);
+    return NextResponse.json({ result: dbResult[0] });
+  } catch (error) {
+    console.error("Request Handling Error:", error);
 
-    //save the result along with user input
-   const dbResult=await db.insert(STUDY_MATERIAL_TABLE).values({
-    courseId:courseId,
-    courseType:courseType,
-    createdBy:createdBy,
-    topic:topic,
-    courseLayout:aiResult
-   }).returning({STUDY_MATERIAL_TABLE})
-
-   console.log(dbResult);
-
-    return NextResponse.json({result:dbResult[0]});
-    
+    return NextResponse.json(
+      { error: "Internal Server Error" },
+      { status: 500 }
+    );
+  }
 }
