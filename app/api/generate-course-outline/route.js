@@ -47,7 +47,7 @@ export async function POST(req) {
         topic,
         courseLayout: aiResult,
       })
-      .returning();
+      .returning({resp:STUDY_MATERIAL_TABLE});
 
     console.log("Database Insert Successful:", dbResult);
     return NextResponse.json({ result: dbResult[0] });
