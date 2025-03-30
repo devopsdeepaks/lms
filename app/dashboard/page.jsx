@@ -5,8 +5,8 @@ import CourseList from './_components/CourseList'
 function Dashboard() {
   return (
     <div>
-      <WelcomeBanner/>
-      <CourseList/>
+      <WelcomeBanner />
+      <CourseList />
     </div>
   )
 }

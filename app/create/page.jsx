@@ -14,10 +14,8 @@ const Create = () => {
     const [step, setStep] = useState(0);
     const [formData, setFormData] = useState([]);
     const { user } = useUser();
-    const [loading,setLoading]=useState(false);
-
-    const router=useRouter();
-    
+    const [loading, setLoading] = useState(false);
+    const router = useRouter();
     const handleUserInput = (fieldName, fieldValue) => {
         setFormData(prev => ({
             ...prev,
@@ -38,11 +36,9 @@ const Create = () => {
             ...formData,
             createdBy: user?.primaryEmailAddress?.emailAddress
         });
-   setLoading(false);
-   router.replace('dashboard');
-
-
-         console.log(result.data.result.resp);
+        setLoading(false);
+        router.replace('/dashboard');
+        console.log(result.data.result.resp);
     }
 
     return (
@@ -55,8 +51,7 @@ const Create = () => {
             </div>
             <div className='flex justify-between w-full mt-32'>
                 {step != 0 ? <Button variant="outline" onClick={() => setStep(0)}>Previous</Button> : '-'}
-                {step == 0 ? <Button onClick={() => setStep(1)}>Next</Button> : <Button onClick={GenerateCourseOutline} disabled={loading}>
-                    {loading?<Loader className='animate-spin'/>:'Generate'}</Button>}
+                {step == 0 ? <Button onClick={() => setStep(1)}>Next</Button> : <Button onClick={GenerateCourseOutline} disabled={loading}>{loading ? <Loader className='animate-spin' /> : "Generate"}</Button>}
 
             </div>
         </div>
