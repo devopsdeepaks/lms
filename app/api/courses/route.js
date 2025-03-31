@@ -31,7 +31,7 @@
 // }
 
 // export async function GET(req) {
-  
+
 //   const reqUrl=req.url;
 //   const {searchParams}=new url(reqUrl);
 //   const courseId=searchParams?.get('courseId');
@@ -53,7 +53,10 @@ export async function POST(req) {
 
     // Check if createdBy is provided
     if (!createdBy) {
-      return NextResponse.json({ error: "createdBy is required" }, { status: 400 });
+      return NextResponse.json(
+        { error: "createdBy is required" },
+        { status: 400 }
+      );
     }
 
     // Execute the query to fetch study materials
@@ -81,12 +84,15 @@ export async function POST(req) {
 export async function GET(req) {
   try {
     const reqUrl = req.url;
-    const { searchParams } = new URL(reqUrl, 'http://localhost:3000'); // Add base URL for parsing
-    const courseId = searchParams.get("courseId");
-
+    const { searchParams } = new URL(reqUrl, "http://localhost:3000"); // Add base URL for parsing
+    const courseId = searchParams?.get("courseId");
+    console.log("course ki id: ", courseId);
     // Check if courseId is provided
     if (!courseId) {
-      return NextResponse.json({ error: "courseId is required" }, { status: 400 });
+      return NextResponse.json(
+        { error: "courseId is required" },
+        { status: 400 }
+      );
     }
 
     // Fetch course data from the database
@@ -105,7 +111,9 @@ export async function GET(req) {
     return NextResponse.json({ result: course[0] });
   } catch (error) {
     console.error("Error fetching course:", error);
-    return NextResponse.json({ error: "Internal Server Error", details: error.message }, { status: 500 });
+    return NextResponse.json(
+      { error: "Internal Server Error", details: error.message },
+      { status: 500 }
+    );
   }
 }
-

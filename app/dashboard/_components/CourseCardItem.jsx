@@ -44,7 +44,7 @@ import React, { useEffect, useState } from 'react';
 
 const CourseCardItem = ({ course }) => {
   const [status, setStatus] = useState(course?.status);
-
+  console.log("course value", course);
   // Optional: simulate status change (just for demonstration)
   useEffect(() => {
     if (course?.status === 'Generating') {
@@ -64,7 +64,7 @@ const CourseCardItem = ({ course }) => {
           <Image src={'/knowledge.png'} alt='Other' width={50} height={50} />
           <h2 className='text-[10px] text-white p-1 px-2 rounded-full bg-blue-600'>20 Dec 2024</h2>
         </div>
-        <h2 className='mt-3 font-medium text-lg'>{course?.courseLayout?.course_title}</h2>
+        <h2 className='mt-3 font-medium text-lg'>{course?.topic}</h2>
         <p className='text-sm line-clamp-2 text-gray-500 mt-2'>{course?.courseLayout?.course_description}</p>
 
         <div className='mt-3'>
