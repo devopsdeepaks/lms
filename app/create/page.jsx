@@ -8,6 +8,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { useUser } from '@clerk/nextjs';
 import { Loader } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { toast } from "sonner"
 
 
 const Create = () => {
@@ -38,6 +39,10 @@ const Create = () => {
         });
         setLoading(false);
         router.replace('/dashboard');
+
+        //tast notificaltion
+        toast("Your course content is generating, click on refresh button")
+
         console.log(result.data.result.resp);
     }
 

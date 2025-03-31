@@ -2,6 +2,7 @@ import { courseOutline } from "@/configs/AiModel";
 import { STUDY_MATERIAL_TABLE } from "@/configs/schema";
 import { db } from "@/configs/db"; // Ensure correct import
 import { NextResponse } from "next/server";
+import { inngest } from "@/inngest/client";
 
 export async function POST(req) {
   try {
@@ -48,6 +49,16 @@ export async function POST(req) {
         courseLayout: aiResult,
       })
       .returning({ resp: STUDY_MATERIAL_TABLE });
+
+      //trigger the innest fun to gene. chapter notes
+
+      const result=await inngest.send({
+        name:'notes.generate',
+        data:{
+          course:dbResult[0].resp
+        }
+      });
+      console.log(result);
 
     console.log("Database Insert Successful:", dbResult);
     return NextResponse.json({ result: dbResult[0] });

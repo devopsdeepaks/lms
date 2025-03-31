@@ -5,6 +5,7 @@ import "tailwindcss";
 // import { ClerkProvider } from "@clerk/nextjs";
 import ClerkLayout from "./components/clerklayout";
 import Provider from "./provider";
+import { Toaster } from "sonner";
 
 export const metadata = {
   title: "Create Next App",
@@ -17,6 +18,7 @@ export default function RootLayout({ children }) {
       <html lang="en">
         <body className={outfit.className}>
           <Provider>{children}</Provider>
+          <Toaster />
         </body>
       </html>
     </ClerkLayout>
