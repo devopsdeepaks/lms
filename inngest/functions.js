@@ -2,7 +2,7 @@ import { db } from "@/configs/db";
 import { inngest } from "./client";
 import { CHAPTER_NOTES_TABLE, STUDY_MATERIAL_TABLE, USER_TABLE } from "@/configs/schema";
 import { eq } from "drizzle-orm";
-import { generateNotesAiModel } from "@/configs/AiModel";
+import { generateNotesAiModel, GenerateStudyTypeContentAimodel } from "@/configs/AiModel";
 
 export const helloWorld = inngest.createFunction(
   { id: "hello-world" },
@@ -61,10 +61,10 @@ export const GenerateNotes=inngest.createFunction(
     //generate notes for each chapter with ai
 
     const noteResult=await step.run('Generate Chapter Notes',async()=>{
-      const Chapter=course?.courseLayout?.chapters;
+      const Chapters=course?.courseLayout?.chapters;
       let index=0;
       Chapters.forEach(async(chapter)=>{
-        const PROMPT='Generate exam material for each chapter, make sure to includes all topics point in the content make sure to give content in HTML format( do not add HTMLK, head, body, title tag), The chapters :  '+ JSON.stringify(chapter);
+        const PROMPT='Generate exam material for each chapter, make sure to includes all topics point in the content make sure to give content in HTML format( do not add HTMLKL, Head, Body, title tag), The chapters :  '+ JSON.stringify(chapter);
         const result=await generateNotesAiModel.sendMessage(PROMPT);
         const aiResp=result.response.text();
 
@@ -90,3 +90,30 @@ const updateCourseStatusResult=await step.run('Update Course Status to Ready',as
 
   }
 )
+//used to generate flashcard ,quiz..
+export const GenerateStudyTypeContent = inngest.createFunction(
+  {
+    id: 'Generate Study Type Content',
+    event: 'studyType.content',  // This event name looks a bit like a string, so it should be correct
+  },
+
+  async ({ event, step }) => {
+    // Destructure the event data properly
+    const { studyType, prompt, courseId ,recordId} = event.data;
+    const FlashcardAiResult=await step.run('Generating Flashcard using Ai',async()=>{
+      const result=await GenerateStudyTypeContentAimodel.sendMessage(prompt);
+      const AIResult=JSON.parse(result.response.text());
+      return AIResult;
+    })
+
+    //save the result
+    const DbResult=await step.run('save result in database',async()=>{
+      const result=await db.insert(STUDY_MATERIAL_TABLE)
+      .set({
+       content:FlashcardAiResult
+      }).where(eq(STUDY_MATERIAL_TABLE.id,recordId))
+
+      return 'data inserted'
+    })
+  }
+);
