@@ -108,7 +108,7 @@ export const GenerateStudyTypeContent = inngest.createFunction(
 
     //save the result
     const DbResult=await step.run('save result in database',async()=>{
-      const result=await db.insert(STUDY_MATERIAL_TABLE)
+      const result=await db.update(STUDY_MATERIAL_TABLE)
       .set({
        content:FlashcardAiResult
       }).where(eq(STUDY_MATERIAL_TABLE.id,recordId))

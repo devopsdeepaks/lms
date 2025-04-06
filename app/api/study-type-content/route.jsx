@@ -1,5 +1,6 @@
 import { db } from "@/configs/db";
 import { STUDY_MATERIAL_TABLE } from "@/configs/schema";
+import { inngest } from "@/inngest/client";
 import { NextResponse } from "next/server";
 
 export async function POST(req) {
@@ -14,7 +15,7 @@ export async function POST(req) {
         courseId:courseId,
         type:type
     }).returning({id:STUDY_MATERIAL_TABLE.id});
-
+//trigger inngest
     inngest.send({
         name:'studyType.content',
         data:{
