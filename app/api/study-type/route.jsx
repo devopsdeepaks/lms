@@ -1,5 +1,5 @@
 import { db } from "@/configs/db";
-import { CHAPTER_NOTES_TABLE } from "@/configs/schema";
+import { CHAPTER_NOTES_TABLE, STUDY_TYPE_CONTENT_TABLE } from "@/configs/schema";
 import { NextResponse } from "next/server";
 import { eq } from "drizzle-orm"; // Ensure eq is imported
 
@@ -21,10 +21,15 @@ export async function POST(req) {
             // Log the result to help with debugging
             console.log("Notes:", notes);
 
+            const contentList = await db.select().from(STUDY_TYPE_CONTENT_TABLE).where(eq(STUDY_TYPE_CONTENT_TABLE?.courseId, courseId));
+
+            const newcontentList = contentList?.find(item => item.type == 'Flashcard');
+
+            console.log("new Content List:", newcontentList.content);
             // Prepare the response
             const result = {
                 notes: notes,
-                flashCard: null,
+                flashCard: newcontentList.content,
                 quiz: null,
                 qa: null
             };
@@ -54,4 +59,4 @@ export async function POST(req) {
     }
 }
 
-    
+

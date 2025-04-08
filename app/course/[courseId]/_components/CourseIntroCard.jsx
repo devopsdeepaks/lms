@@ -10,7 +10,7 @@ function CourseIntroCard({ course }) {
       <div>
         <h2 className='font-bold text-2xl'>{course?.courseLayout?.course_title || 'Default Course Title'}</h2>
         <p>{course?.courseLayout?.course_description}</p>
-        <progress className="mt-3 w-full"/>
+        <progress className="mt-3 w-full" />
 
         <h2 className='mt-3 text-lg text-primary'>Total Chapter: {course?.courseLayout?.chapters.length}</h2>
       </div>
