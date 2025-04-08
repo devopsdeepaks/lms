@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button'
 import axios from 'axios'
 import { RefreshCcw } from 'lucide-react'
 import Link from 'next/link'
+import { toast } from 'sonner'
 
 function MaterialCardItem({ item, studyTypeContent, course, refreshData }) {
   const [loading, setLoading] = useState(false)
@@ -25,7 +26,8 @@ function MaterialCardItem({ item, studyTypeContent, course, refreshData }) {
     })
     console.log("this is the flash result", result)
     setLoading(false);
-    refreshData(true)
+    refreshData(true);
+    toast("Your content is being generated")
   }
 
   return (
