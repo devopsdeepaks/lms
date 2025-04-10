@@ -50,15 +50,15 @@ export async function POST(req) {
       })
       .returning({ resp: STUDY_MATERIAL_TABLE });
 
-      //trigger the innest fun to gene. chapter notes
+    //trigger the innest fun to gene. chapter notes
 
-      const result=await inngest.send({
-        name:'notes.generate',
-        data:{
-          course:dbResult[0].resp
-        }
-      });
-      console.log(result);
+    const result = await inngest.send({
+      name: "notes.generate",
+      data: {
+        course: dbResult[0].resp,
+      },
+    });
+    console.log("ye hai chapter notes ka result ji", result);
 
     console.log("Database Insert Successful:", dbResult);
     return NextResponse.json({ result: dbResult[0] });
@@ -71,4 +71,3 @@ export async function POST(req) {
     );
   }
 }
-

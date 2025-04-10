@@ -1,7 +1,7 @@
 import { db } from "@/configs/db";
-import { CHAPTER_NOTES_TABLE } from "@/configs/schema";
+import { CHAPTER_NOTES_TABLE, STUDY_TYPE_CONTENT_TABLE } from "@/configs/schema";
 import { NextResponse } from "next/server";
-import { eq } from "drizzle-orm"; // Ensure eq is imported
+import { and, eq } from "drizzle-orm"; // Ensure eq is imported
 
 export async function POST(req) {
     try {
@@ -19,12 +19,17 @@ export async function POST(req) {
                 .where(eq(CHAPTER_NOTES_TABLE?.courseId, courseId));
 
             // Log the result to help with debugging
-            console.log("Notes:", notes);
+            // console.log("Notes:", notes);
 
+            const contentList = await db.select().from(STUDY_TYPE_CONTENT_TABLE).where(eq(STUDY_TYPE_CONTENT_TABLE?.courseId, courseId));
+
+            const newcontentList = contentList?.find(item => item.type == 'flashCard');
+
+            console.log("new Content List:", newcontentList);
             // Prepare the response
             const result = {
                 notes: notes,
-                flashCard: null,
+                flashCard: newcontentList === undefined ? null : newcontentList.content,
                 quiz: null,
                 qa: null
             };
@@ -38,10 +43,19 @@ export async function POST(req) {
                 .where(eq(CHAPTER_NOTES_TABLE?.courseId, courseId));
 
             // Log the result to help with debugging
-            console.log("Notes for specific studyType:", notes);
+            // console.log("Notes for specific studyType:", notes);
 
             // Return the specific notes data (you can modify this part as needed)
             return NextResponse.json({ notes: notes });
+        }
+        else {
+            const result = await db.select().from(STUDY_TYPE_CONTENT_TABLE)
+                .where(and(eq(STUDY_TYPE_CONTENT_TABLE?.courseId, courseId)), (eq(STUDY_TYPE_CONTENT_TABLE?.type, studyType)))
+
+
+
+            // Return the specific notes data (you can modify this part as needed)
+            return NextResponse.json(result[0]);
         }
 
         // Return an error for invalid studyType
@@ -54,4 +68,4 @@ export async function POST(req) {
     }
 }
 
-    
+

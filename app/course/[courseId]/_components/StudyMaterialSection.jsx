@@ -3,7 +3,7 @@ import MaterialCardItem from '../_components/MaterialCardItem'; // going one lev
 import axios from 'axios';
 import Link from 'next/link';
 
-function StudyMaterialSection({ courseId,course }) {
+function StudyMaterialSection({ courseId, course }) {
 
     const [studyTypeContent, setStudyTypeContent] = useState();
     const MaterialList = [
@@ -15,8 +15,8 @@ function StudyMaterialSection({ courseId,course }) {
             type: 'notes'
         },
         {
-            name: 'Flashcard',
-            desc: 'Flashcard help to remember the concepts ',
+            name: 'flashCard',
+            desc: 'Flashcard help remember concepts ',
             icon: '/flashcard.png',
             path: '/flashcards',
             type: 'flashCard'
@@ -62,12 +62,13 @@ function StudyMaterialSection({ courseId,course }) {
             <h2 className='font-medium text-xl'>Study Materials</h2>
             <div className='grid grid-cols-2 md:grid-cols-4 gap-5 mt-3'>
                 {MaterialList.map((item, index) => (
-                    <Link key={index} href={'/course/'+courseId+item.path}>
+                    // <Link key={index} href={'/course/' + courseId + item.path}>
                     <MaterialCardItem key={item.icon} item={item}
                         studyTypeContent={studyTypeContent}
                         course={course}
+                        refreshData={GetStudyMaterial}
                     />
-                    </Link>
+                    // </Link>
                 ))}
             </div>
         </div>
