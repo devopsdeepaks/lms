@@ -22,7 +22,7 @@ function StudyMaterialSection({ courseId, course }) {
             type: 'flashCard'
         },
         {
-            name: 'Quiz',
+            name: 'quiz',
             desc: 'Great way to test your knowledge',
             icon: '/quiz.png',
             path: '/quiz',
