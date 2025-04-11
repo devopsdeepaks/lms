@@ -114,7 +114,7 @@ export const GenerateStudyTypeContent = inngest.createFunction(
     // Destructure the event data properly
     const { studyType, prompt, courseId, recordId } = event.data;
     console.log("Study Type:", studyType);
-
+     
     const FlashcardAiResult = await step.run(
       "Generating Flashcard using Ai",
       async () => {
