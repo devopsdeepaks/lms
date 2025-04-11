@@ -25,12 +25,14 @@ export async function POST(req) {
 
             const newcontentList = contentList?.find(item => item.type == 'flashCard');
 
-            console.log("new Content List:", newcontentList);
+            const newcontentListQuiz = contentList?.find(item => item.type == 'quiz');
+
+            console.log("new Content List:", newcontentListQuiz);
             // Prepare the response
             const result = {
                 notes: notes,
                 flashCard: newcontentList === undefined ? null : newcontentList.content,
-                quiz: null,
+                quiz: newcontentListQuiz === undefined ? null : newcontentListQuiz.content.questions,
                 qa: null
             };
 
@@ -48,11 +50,17 @@ export async function POST(req) {
             // Return the specific notes data (you can modify this part as needed)
             return NextResponse.json({ notes: notes });
         }
+
         else {
+            console.log("🟨 ELSE block triggered with studyType:", studyType);
+            console.log("Study Type:", studyType);
+            console.log("Course ID:", courseId);
+
             const result = await db.select().from(STUDY_TYPE_CONTENT_TABLE)
-                .where(and(eq(STUDY_TYPE_CONTENT_TABLE?.courseId, courseId)), (eq(STUDY_TYPE_CONTENT_TABLE?.type, studyType)))
-
-
+                .where(and(
+                    eq(STUDY_TYPE_CONTENT_TABLE?.courseId, courseId),
+                    eq(STUDY_TYPE_CONTENT_TABLE?.type, studyType.toLowerCase())
+                ))
 
             // Return the specific notes data (you can modify this part as needed)
             return NextResponse.json(result[0]);

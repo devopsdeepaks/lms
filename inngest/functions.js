@@ -9,6 +9,7 @@ import {
 import { eq } from "drizzle-orm";
 import {
   generateNotesAiModel,
+  GenerateQuizAiModel,
   GenerateStudyTypeContentAimodel,
 } from "@/configs/AiModel";
 
@@ -114,13 +115,14 @@ export const GenerateStudyTypeContent = inngest.createFunction(
     // Destructure the event data properly
     const { studyType, prompt, courseId, recordId } = event.data;
     console.log("Study Type:", studyType);
-     
-    const FlashcardAiResult = await step.run(
+
+    const AiResult = await step.run(
       "Generating Flashcard using Ai",
       async () => {
-        const result = await GenerateStudyTypeContentAimodel.sendMessage(
-          prompt
-        );
+        const result =
+          studyType == "flashCard"
+            ? await GenerateStudyTypeContentAimodel.sendMessage(prompt)
+            : await GenerateQuizAiModel.sendMessage(prompt);
         const AIResult = JSON.parse(result.response.text());
         return AIResult;
       }
@@ -131,7 +133,7 @@ export const GenerateStudyTypeContent = inngest.createFunction(
       const result = await db
         .update(STUDY_TYPE_CONTENT_TABLE)
         .set({
-          content: FlashcardAiResult,
+          content: AiResult,
           status: "Ready",
         })
         .where(eq(STUDY_TYPE_CONTENT_TABLE.id, recordId));
