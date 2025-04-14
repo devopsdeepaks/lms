@@ -11,6 +11,7 @@ import { db } from '@/configs/db';
 function Upgrade() {
   const { user } = useUser();
   const [userDetail, setUserDetail] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -36,7 +37,7 @@ function Upgrade() {
       const result = await axios.post('/api/payment/checkout', {
         priceId: process.env.NEXT_PUBLIC_STRIPE_PRICE_ID_MONTHLY,
       });
-
+      console.log("result data", result.data);
       const url = result.data?.url;
 
       if (url) {
@@ -50,52 +51,51 @@ function Upgrade() {
   };
 
   const onPaymentManage = async () => {
-    const customerId = userDetail?.customerId;
-    console.log("customerId:", customerId);
-  
-    if (!customerId) {
-      console.error("Customer ID is undefined.");
-      alert("Customer ID is missing. Please try again later.");
+    if (!userDetail?.customerId) {
+      console.error("No customer ID found for user");
+      alert("Unable to find your payment information. Please contact support.");
       return;
     }
-  
+
+    setIsLoading(true);
     try {
       const result = await axios.post("/api/payment/manage-payment", {
-        customerId,
+        customerId: userDetail.customerId,
       });
-  
+
       if (result.data?.error) {
-        console.error("Backend error:", result.data.error);
-        alert("There was an issue processing your payment. Please try again later.");
+        console.error("Payment management error:", result.data.error);
+        alert("There was an error managing your payment. Please try again later.");
         return;
       }
-  
-      const url = result.data?.url;
-      if (url) {
-        window.location.href = url;
-      } else {
-        console.error("No Stripe portal URL returned.");
-        alert("There was an issue redirecting to the payment portal. Please try again later.");
+
+      if (!result.data?.url) {
+        console.error("No portal URL returned from server");
+        alert("Unable to access payment portal. Please try again later.");
+        return;
       }
+
+      window.location.href = result.data.url;
     } catch (error) {
-      // Log the error properly based on its format
+      console.error("Payment management error:", error);
       if (error.response) {
-        // This is an axios error with a response from the server
-        console.error("Manage payment error (Axios Response):", error.response.data);
-        alert("There was an issue with the backend request. Please try again later.");
+        // The request was made and the server responded with a status code
+        // that falls out of the range of 2xx
+        console.error("Server response:", error.response.data);
+        alert("There was an error processing your request. Please try again later.");
       } else if (error.request) {
-        // This is an error where no response was received
-        console.error("Manage payment error (No Response):", error.request);
-        alert("There was no response from the server. Please check your network and try again.");
+        // The request was made but no response was received
+        console.error("No response received:", error.request);
+        alert("Unable to connect to the server. Please check your internet connection.");
       } else {
-        // This is any other error (e.g., malformed request)
-        console.error("Manage payment error (Other):", error.message);
+        // Something happened in setting up the request that triggered an Error
+        console.error("Error setting up request:", error.message);
         alert("An unexpected error occurred. Please try again later.");
       }
+    } finally {
+      setIsLoading(false);
     }
   };
-  
-  
 
   return (
     <div className="min-h-screen bg-white px-4 py-10 md:px-20">
@@ -141,9 +141,11 @@ function Upgrade() {
           ) : (
             <Button
               onClick={onPaymentManage}
-              className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 transition"
+              disabled={isLoading}
+              className={`bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 transition ${isLoading ? 'opacity-50 cursor-not-allowed' : ''
+                }`}
             >
-              Manage Payment
+              {isLoading ? 'Loading...' : 'Manage Payment'}
             </Button>
           )}
         </div>
