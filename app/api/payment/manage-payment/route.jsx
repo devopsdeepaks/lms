@@ -6,19 +6,23 @@ export async function POST(req) {
     const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
     const { customerId } = await req.json();
 
+    console.log("👉 Received customerId:", customerId);
+
     if (!customerId) {
-      console.error("Missing customerId in request.");
+      console.error("❌ Missing customerId in request.");
       return NextResponse.json({ error: "Missing customerId" }, { status: 400 });
     }
 
-    const portalSession = await stripe.billingPortal.sessions.create({
+    const session = await stripe.billingPortal.sessions.create({
       customer: customerId,
-      return_url: process.env.HOST_URL,
+      return_url: process.env.HOST_URL || "http://localhost:3000/",
     });
 
-    return NextResponse.json({ url: portalSession.url });
+    console.log("✅ Billing Portal Session:", session);
+
+    return NextResponse.json({ url: session.url });
   } catch (err) {
-    console.error("Stripe portal session error:", err);
-    return NextResponse.json({ error: err.message }, { status: 500 });
+    console.error("❌ Stripe Portal Error:", err);
+    return NextResponse.json({ error: err.message || "Internal Server Error" }, { status: 500 });
   }
 }

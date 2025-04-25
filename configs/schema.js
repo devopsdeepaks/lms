@@ -7,7 +7,7 @@ export const USER_TABLE = pgTable("user", {
   name: varchar().notNull(),
   email: varchar().notNull(),
   isMember: boolean().default(false),
-  customerId:varchar(),
+  customerId: varchar(), // Stripe customer ID
 });
 
 // STUDY_MATERIAL_TABLE Schema

@@ -1,28 +1,33 @@
-import { NextResponse } from "next/server";
-import Stripe from "stripe";
+import { NextResponse } from 'next/server';
+import Stripe from 'stripe';
 
 export async function POST(req) {
-  const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+  try {
+    const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+    const { priceId } = await req.json();
 
-  const { priceId } = await req.json();
+    if (!priceId) {
+      return NextResponse.json({ error: 'Missing priceId' }, { status: 400 });
+    }
 
-  const session = await stripe.checkout.sessions.create({
-    mode: 'subscription',
-    payment_method_types: ['card'],
-    line_items: [
-      {
-        price: priceId,
-        // For metered billing, do not pass quantity
-        quantity: 1,
-      },
-    ],
-    // {CHECKOUT_SESSION_ID} is a string literal; do not change it!
-    // the actual Session ID is returned in the query parameter when your customer
-    // is redirected to the success page.
-    success_url: process.env.HOST_URL + 'payment-success?session_id={CHECKOUT_SESSION_ID}',
-    cancel_url: process.env.HOST_URL,
-    customer_creation: 'always', // This ensures a customer is always created
-  });
+    const session = await stripe.checkout.sessions.create({
+      mode: 'subscription',
+      payment_method_types: ['card'],
+      line_items: [
+        {
+          price: priceId,
+          quantity: 1,
+        },
+      ],
+      success_url: `${process.env.HOST_URL}payment-success?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: process.env.HOST_URL,
+      // ❌ Remove this line:
+      // customer_creation: 'always',
+    });
 
-  return NextResponse.json(session);
+    return NextResponse.json({ url: session.url });
+  } catch (error) {
+    console.error('Stripe Checkout error:', error.message);
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
 }

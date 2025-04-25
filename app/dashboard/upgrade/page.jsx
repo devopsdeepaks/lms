@@ -1,12 +1,12 @@
-"use client";
+'use client';
 
 import React, { useEffect, useState } from 'react';
-import { Button } from '@/components/ui/button';
 import axios from 'axios';
 import { useUser } from '@clerk/nextjs';
-import { eq } from 'drizzle-orm';
-import { USER_TABLE } from '@/configs/schema';
 import { db } from '@/configs/db';
+import { USER_TABLE } from '@/configs/schema';
+import { eq } from 'drizzle-orm';
+import { Button } from '@/components/ui/button';
 
 function Upgrade() {
   const { user } = useUser();
@@ -26,9 +26,10 @@ function Upgrade() {
         .from(USER_TABLE)
         .where(eq(USER_TABLE.email, user?.primaryEmailAddress?.emailAddress));
 
+      console.log("✅ User fetched:", result[0]);
       setUserDetail(result[0]);
     } catch (error) {
-      console.error("Error fetching user detail:", error);
+      console.error("❌ Error fetching user detail:", error);
     }
   };
 
@@ -37,23 +38,27 @@ function Upgrade() {
       const result = await axios.post('/api/payment/checkout', {
         priceId: process.env.NEXT_PUBLIC_STRIPE_PRICE_ID_MONTHLY,
       });
-      console.log("result data", result.data);
+
+      console.log("✅ Checkout response:", result.data);
+
       const url = result.data?.url;
 
       if (url) {
         window.location.href = url;
       } else {
-        console.error("No Stripe checkout URL returned.");
+        console.error("❌ No Stripe checkout URL returned.");
+        alert("Something went wrong with payment. Please try again.");
       }
     } catch (error) {
-      console.error("Checkout error:", error);
+      console.error("❌ Checkout error:", error.response?.data || error.message);
+      alert("An error occurred while starting payment. Try again later.");
     }
   };
 
   const onPaymentManage = async () => {
     if (!userDetail?.customerId) {
-      console.error("No customer ID found for user");
-      alert("Unable to find your payment information. Please contact support.");
+      console.error("❌ No customer ID found for user:", userDetail);
+      alert("We couldn't find your payment info. Please contact support.");
       return;
     }
 
@@ -63,35 +68,17 @@ function Upgrade() {
         customerId: userDetail.customerId,
       });
 
-      if (result.data?.error) {
-        console.error("Payment management error:", result.data.error);
-        alert("There was an error managing your payment. Please try again later.");
-        return;
-      }
+      console.log("✅ Manage Payment Response:", result.data);
 
-      if (!result.data?.url) {
-        console.error("No portal URL returned from server");
-        alert("Unable to access payment portal. Please try again later.");
-        return;
-      }
-
-      window.location.href = result.data.url;
-    } catch (error) {
-      console.error("Payment management error:", error);
-      if (error.response) {
-        // The request was made and the server responded with a status code
-        // that falls out of the range of 2xx
-        console.error("Server response:", error.response.data);
-        alert("There was an error processing your request. Please try again later.");
-      } else if (error.request) {
-        // The request was made but no response was received
-        console.error("No response received:", error.request);
-        alert("Unable to connect to the server. Please check your internet connection.");
+      if (result.data?.url) {
+        window.location.href = result.data.url;
       } else {
-        // Something happened in setting up the request that triggered an Error
-        console.error("Error setting up request:", error.message);
-        alert("An unexpected error occurred. Please try again later.");
+        console.error("❌ No billing portal URL returned.");
+        alert("Unable to open billing portal. Try again later.");
       }
+    } catch (error) {
+      console.error("❌ Manage payment error:", error.response?.data || error.message);
+      alert("Unexpected error. Please try again later.");
     } finally {
       setIsLoading(false);
     }
