@@ -81,7 +81,7 @@ export default function Home() {
         <div className="flex flex-wrap justify-center gap-10">
           {[
             { name: "Simaran Sahu", role: "Full Stack Developer", img: "/exam.png" },
-            { name: "Deepak singhal", role: "UI/UX Designer", img: "/exam.png" },
+            { name: "Deepak singhal", role: "Full Stack Developer", img: "/exam.png" },
            
           ].map((member, index) => (
             <div key={index} className="bg-gray-900 rounded-xl p-6 w-64 shadow hover:scale-105 transition">
