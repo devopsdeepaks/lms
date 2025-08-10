@@ -25,8 +25,12 @@ export async function POST(req) {
 
             const result = {
                 notes: notes,
-                flashCard: newcontentList === undefined ? null : newcontentList.content,
-                quiz: newcontentListQuiz === undefined ? null : newcontentListQuiz.content.questions,
+                flashCard: (newcontentList === undefined || !newcontentList.content)
+    ? null
+    : newcontentList.content,
+                quiz: (newcontentListQuiz === undefined || !newcontentListQuiz.content || !newcontentListQuiz.content.questions)
+    ? null
+    : newcontentListQuiz.content.questions,
                 qa: null
             };
 
