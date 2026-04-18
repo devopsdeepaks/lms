@@ -10,55 +10,63 @@ import {
     CarouselNext,
     CarouselPrevious,
 } from "@/components/ui/carousel"
-import { index } from 'drizzle-orm/gel-core'
 
 const FlashCards = () => {
     const { courseId } = useParams()
-    const [Flashcard, setFlashcard] = useState([]);
-    const [isFlipped, setIsFlipped] = useState();
+    const [Flashcard, setFlashcard] = useState(null);
+    const [isFlipped, setIsFlipped] = useState(false);
     const [api, setApi] = useState();
+
     useEffect(() => {
         getFlashCards()
     }, [])
+
     useEffect(() => {
-        if (!api) {
-            return;
-        }
+        if (!api) return;
         api.on('select', () => {
             setIsFlipped(false);
         })
     }, [api])
+
     const getFlashCards = async () => {
         const result = await axios.post('/api/study-type', {
             courseId: courseId,
             studyType: "flashCard"
         });
-        setFlashcard(result?.data);
-        console.log('Flashcard', result.data)
+        const data = result?.data;
+        // Normalize: content may be an array directly or wrapped in an object
+        if (data?.content && !Array.isArray(data.content) && Array.isArray(data.content?.results)) {
+            data.content = data.content.results;
+        }
+        setFlashcard(data);
     }
 
     const handleClick = () => {
-        setIsFlipped(!isFlipped);
-        // console.log("this is flipped", isFlipped)
+        setIsFlipped(prev => !prev);
     }
+
+    const cards = Array.isArray(Flashcard?.content) ? Flashcard.content : [];
+
     return (
         <div>
             <h1 className='font-bold text-2xl'>FlashCards</h1>
-            <p>FlashCards : The Ultimate tool to lock in concepts!</p>
+            <p>FlashCards: The Ultimate tool to lock in concepts!</p>
             <div>
-                <Carousel setApi={setApi}>
-                    <CarouselContent>
-                        {Flashcard?.content && Flashcard.content.map((flashcard, index) => (
-                            <CarouselItem key={index}><FlashCardItem handleClick={handleClick} isFlipped={isFlipped} flashcard={flashcard} /></CarouselItem>
-                        ))}
-
-
-                    </CarouselContent>
-                    <CarouselPrevious />
-                    <CarouselNext />
-                </Carousel>
-
-
+                {Flashcard === null && <p className='text-center text-gray-500 mt-10'>Loading flashcards...</p>}
+                {Flashcard !== null && cards.length === 0 && <p className='text-center text-gray-500 mt-10'>No flashcard content available yet.</p>}
+                {cards.length > 0 && (
+                    <Carousel setApi={setApi}>
+                        <CarouselContent>
+                            {cards.map((flashcard, index) => (
+                                <CarouselItem key={index}>
+                                    <FlashCardItem handleClick={handleClick} isFlipped={isFlipped} flashcard={flashcard} />
+                                </CarouselItem>
+                            ))}
+                        </CarouselContent>
+                        <CarouselPrevious />
+                        <CarouselNext />
+                    </Carousel>
+                )}
             </div>
         </div>
     )

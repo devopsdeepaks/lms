@@ -6,17 +6,20 @@ import { NextResponse } from "next/server";
 export async function POST(req) {
     const { chapters, courseId, type } = await req.json();
 
+    if (!chapters || !courseId || !type) {
+        return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+    }
 
-    const PROMPT = type == 'flashCard' ? 'Generate the flashcard on topic :' + chapters + ' in JSON format with front back content , Maximum 15' : 'Generate the quiz on topic :' + chapters + ' in JSON format with question and answer, Maximum 10';
-
-    //insert record to db
+    const PROMPT = type === 'flashCard'
+        ? 'Generate the flashcard on topic: ' + chapters + ' in JSON format as an array of objects with "front" and "back" fields. Maximum 15 cards. Return only valid JSON array.'
+        : 'Generate a quiz on topic: ' + chapters + ' in JSON format as an object with a "questions" array. Each question must have "question", "options" (array of 4 strings), and "correctAnswer" fields. Maximum 10 questions. Return only valid JSON.';
 
     const result = await db.insert(STUDY_TYPE_CONTENT_TABLE).values({
         courseId: courseId,
         type: type
     }).returning({ id: STUDY_TYPE_CONTENT_TABLE.id });
-    //Trigger the inngest function
-    inngest.send({
+
+    await inngest.send({
         name: 'studyType.content',
         data: {
             studyType: type,

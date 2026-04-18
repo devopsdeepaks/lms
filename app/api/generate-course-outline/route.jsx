@@ -1,6 +1,6 @@
-import { courseOutline } from "@/configs/AiModel";
+import { model, extractJson } from "@/configs/AiModel";
 import { STUDY_MATERIAL_TABLE } from "@/configs/schema";
-import { db } from "@/configs/db"; // Ensure correct import
+import { db } from "@/configs/db";
 import { NextResponse } from "next/server";
 import { inngest } from "@/inngest/client";
 
@@ -14,22 +14,17 @@ export async function POST(req) {
         { status: 400 }
       );
     }
-    // console.log("course ka type", courseType);
-    // console.log("course ka id", courseId);
-    // console.log("course ka topic", topic);
-    // console.log("course ka difficulty level", difficultyLevel);
-    // console.log("course ka created by", createdBy);
-    const PROMPT = `Generate a study material for ${topic} for ${courseType} and ${courseId} and ${difficultyLevel} and ${createdBy}`;
-    // Generate course layout using AI
-    const aiResp = await courseOutline.sendMessage(PROMPT);
+
+    const PROMPT = `Generate a study material for ${topic} for ${courseType} with difficulty level ${difficultyLevel}. Return ONLY a valid JSON object with keys: course_title, course_description, chapters (array with chapter_number, chapter_title, chapter_summary, topics array with topic_title and topic_description).`;
+
+    const aiResp = await model.generateContent(PROMPT);
     const aiText = await aiResp.response.text();
-    // console.log("ye hi wala aaya hai", aiText);
 
     let aiResult;
     try {
-      aiResult = JSON.parse(aiText);
+      aiResult = extractJson(aiText);
     } catch (error) {
-      console.error("AI Response Parsing Error:", error);
+      console.error("AI Response Parsing Error:", error, "\nRaw:", aiText.slice(0, 200));
       return NextResponse.json(
         { error: "Invalid AI response format" },
         { status: 500 }
@@ -51,14 +46,17 @@ export async function POST(req) {
       .returning({ resp: STUDY_MATERIAL_TABLE });
 
     //trigger the innest fun to gene. chapter notes
-
-    const result = await inngest.send({
-      name: "notes.generate",
-      data: {
-        course: dbResult[0].resp,
-      },
-    });
-    console.log("ye hai chapter notes ka result ji", result);
+    try {
+      const result = await inngest.send({
+        name: "notes.generate",
+        data: {
+          course: dbResult[0].resp,
+        },
+      });
+      console.log("ye hai chapter notes ka result ji", result);
+    } catch (inngestErr) {
+      console.warn("Inngest send failed (notes won't generate async):", inngestErr?.message);
+    }
 
     console.log("Database Insert Successful:", dbResult);
     return NextResponse.json({ result: dbResult[0] });
@@ -66,7 +64,7 @@ export async function POST(req) {
     console.error("Request Handling Error:", error);
 
     return NextResponse.json(
-      { error: "Internal Server Error" },
+      { error: error?.message || "Internal Server Error" },
       { status: 500 }
     );
   }

@@ -1,77 +1,106 @@
-"use client"; // This line marks the file as a client component
+"use client";
 
 import { useParams } from "next/navigation";
 import React, { useEffect, useState } from "react";
-import axios from "axios"; // Ensure axios is imported
+import axios from "axios";
 import { Button } from "@/components/ui/button";
 
 function ViewNotes() {
-    const { courseId } = useParams(); // Extract courseId from URL params
-    const [notes, setNotes] = useState([]); // Initialize with empty array
+    const { courseId } = useParams();
+    const [notes, setNotes] = useState([]);
     const [stepCount, setStepCount] = useState(0);
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        GetNotes(); // Fetch notes when the component mounts
-    }, [courseId]); // Depend on `courseId` so the effect re-runs when it changes
+        GetNotes();
+    }, [courseId]);
 
-    // Function to fetch notes from the API
     const GetNotes = async () => {
         try {
-            // Make the API request
+            setLoading(true);
             const result = await axios.post('/api/study-type', {
                 courseId: courseId,
                 studyType: 'notes'
             });
-
-            console.log(result); // Log the entire response object
-            console.log(result?.data); // Log only the `data` part of the response
-            
-            // Assuming result.data contains an array under the `notes` field
             if (Array.isArray(result?.data?.notes)) {
-                setNotes(result.data.notes); // Set notes if it's an array
+                setNotes(result.data.notes);
             } else {
-                console.error("Expected an array under `notes`, but got:", result?.data);
-                setNotes([]); // Fallback to empty array if data is not an array
+                setNotes([]);
             }
         } catch (error) {
             console.error("Error fetching notes:", error);
-            setNotes([]); // Handle errors and set notes as empty array
+            setNotes([]);
+        } finally {
+            setLoading(false);
         }
     };
 
-    // Render the component
-    return notes && Array.isArray(notes) ? (
+    if (loading) {
+        return <div className="text-center text-gray-500 mt-10">Loading notes...</div>;
+    }
+
+    if (notes.length === 0) {
+        return <div className="text-center text-gray-500 mt-10">No notes available yet.</div>;
+    }
+
+    const currentNote = notes[stepCount];
+
+    return (
         <div>
-            <div className="flex gap-5 items-center">
-                {stepCount !== 0 && (
-                    <Button variant="outline" size="sm" onClick={() => setStepCount(stepCount - 1)}>
-                        Previous
-                    </Button>
-                )}
+            {/* Navigation */}
+            <div className="flex gap-3 items-center mb-6">
+                <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={stepCount === 0}
+                    onClick={() => setStepCount(prev => prev - 1)}
+                >
+                    Previous
+                </Button>
 
-                {/* Render progress indicators for each note */}
-                {notes.length > 0 && notes.map((item, index) => (
-                    <div
-                        key={index}
-                        className={`w-full h-2 rounded-full ${index < stepCount ? 'bg-pink-50' : 'bg-slate-400'}`}
-                    ></div>
-                ))}
+                {/* Progress dots */}
+                <div className="flex gap-2 flex-1">
+                    {notes.map((_, index) => (
+                        <div
+                            key={index}
+                            onClick={() => setStepCount(index)}
+                            className={`flex-1 h-2 rounded-full cursor-pointer transition-colors ${
+                                index === stepCount
+                                    ? 'bg-blue-500'
+                                    : index < stepCount
+                                    ? 'bg-blue-200'
+                                    : 'bg-slate-300'
+                            }`}
+                        />
+                    ))}
+                </div>
 
-                <Button variant="outline" size="sm" onClick={() => setStepCount(stepCount + 1)}>
+                <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={stepCount === notes.length - 1}
+                    onClick={() => setStepCount(prev => prev + 1)}
+                >
                     Next
                 </Button>
             </div>
 
-            <div className="mt-10">
-                {/* Render the note's content */}
-                <div dangerouslySetInnerHTML={{ __html: (notes[stepCount]?.notes)?.replace('```html', ' ') }} />
-            </div>
+            <p className="text-sm text-gray-500 mb-4">
+                Chapter {stepCount + 1} of {notes.length}
+            </p>
+
+            {/* Note content */}
+            <div
+                className="prose max-w-none"
+                dangerouslySetInnerHTML={{
+                    __html: currentNote?.notes
+                        ?.replace(/```html\s*/gi, '')
+                        .replace(/```\s*/g, '')
+                        .trim() ?? ''
+                }}
+            />
         </div>
-    ) : (
-        <div>Loading notes...</div> // Loading state in case the data is not available yet
     );
 }
 
 export default ViewNotes;
-
-

@@ -3,9 +3,6 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { useUser } from '@clerk/nextjs';
-import { db } from '@/configs/db';
-import { USER_TABLE } from '@/configs/schema';
-import { eq } from 'drizzle-orm';
 import { Button } from '@/components/ui/button';
 
 function Upgrade() {
@@ -21,13 +18,9 @@ function Upgrade() {
 
   const GetUserDetail = async () => {
     try {
-      const result = await db
-        .select()
-        .from(USER_TABLE)
-        .where(eq(USER_TABLE.email, user?.primaryEmailAddress?.emailAddress));
-
-      console.log("✅ User fetched:", result[0]);
-      setUserDetail(result[0]);
+      const email = user?.primaryEmailAddress?.emailAddress;
+      const result = await axios.get(`/api/user?email=${encodeURIComponent(email)}`);
+      setUserDetail(result.data);
     } catch (error) {
       console.error("❌ Error fetching user detail:", error);
     }

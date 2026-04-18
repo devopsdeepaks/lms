@@ -7,11 +7,7 @@ import {
   USER_TABLE,
 } from "@/configs/schema";
 import { eq } from "drizzle-orm";
-import {
-  generateNotesAiModel,
-  GenerateQuizAiModel,
-  GenerateStudyTypeContentAimodel,
-} from "@/configs/AiModel";
+import { model, extractJson } from "@/configs/AiModel";
 
 export const helloWorld = inngest.createFunction(
   { id: "hello-world" },
@@ -72,12 +68,13 @@ export const GenerateNotes = inngest.createFunction(
     const noteResult = await step.run("Generate Chapter Notes", async () => {
       const Chapters = course?.courseLayout?.chapters;
       let index = 0;
-      Chapters.forEach(async (chapter) => {
+      for (const chapter of Chapters) {
         const PROMPT =
-          "Generate study material for each chapter, make sure to includes all topics point in the content make sure to give content in HTML format with tailwind css !make sure to add headings and paragraphs and code with proper styling and spacing( do not add HTMLKL, Head, Body, title tag), The chapters :  " +
+          "Generate detailed study material for this chapter. Include all topic points. Return content in HTML format using Tailwind CSS classes for headings, paragraphs, and code blocks. Do NOT include html, head, body, or title tags. Chapter: " +
           JSON.stringify(chapter);
-        const result = await generateNotesAiModel.sendMessage(PROMPT);
-        const aiResp = result.response.text();
+        const result = await model.generateContent(PROMPT);
+        const raw = result.response.text();
+        const aiResp = raw.replace(/```html\s*/gi, "").replace(/```\s*/g, "").trim();
 
         await db.insert(CHAPTER_NOTES_TABLE).values({
           chapterId: index,
@@ -85,7 +82,7 @@ export const GenerateNotes = inngest.createFunction(
           notes: aiResp,
         });
         index = index + 1;
-      });
+      }
       return "completed";
     });
 
@@ -119,11 +116,8 @@ export const GenerateStudyTypeContent = inngest.createFunction(
     const AiResult = await step.run(
       "Generating Flashcard using Ai",
       async () => {
-        const result =
-          studyType == "flashCard"
-            ? await GenerateStudyTypeContentAimodel.sendMessage(prompt)
-            : await GenerateQuizAiModel.sendMessage(prompt);
-        const AIResult = JSON.parse(result.response.text());
+        const result = await model.generateContent(prompt);
+        const AIResult = extractJson(result.response.text());
         return AIResult;
       }
     );

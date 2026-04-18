@@ -1,7 +1,7 @@
 import { db } from "@/configs/db";
 import { CHAPTER_NOTES_TABLE, STUDY_TYPE_CONTENT_TABLE } from "@/configs/schema";
 import { NextResponse } from "next/server";
-import { and, eq } from "drizzle-orm"; // Ensure eq is imported
+import { and, eq, desc } from "drizzle-orm";
 
 export async function POST(req) {
     try {
@@ -18,19 +18,26 @@ export async function POST(req) {
             const notes = await db.select().from(CHAPTER_NOTES_TABLE)
                 .where(eq(CHAPTER_NOTES_TABLE?.courseId, courseId));
 
-            const contentList = await db.select().from(STUDY_TYPE_CONTENT_TABLE).where(eq(STUDY_TYPE_CONTENT_TABLE?.courseId, courseId));
+            const contentList = await db.select().from(STUDY_TYPE_CONTENT_TABLE)
+                .where(eq(STUDY_TYPE_CONTENT_TABLE?.courseId, courseId))
+                .orderBy(desc(STUDY_TYPE_CONTENT_TABLE.id));
 
-            const newcontentList = contentList?.find(item => item.type === 'flashCard');
-            const newcontentListQuiz = contentList?.find(item => item.type === 'quiz');
+            // Pick most recent record with content; fall back to most recent overall
+            const findBest = (type) => {
+                const records = contentList.filter(item => item.type === type);
+                return records.find(r => r.content) || records[0];
+            };
+            const newcontentList = findBest('flashCard');
+            const newcontentListQuiz = findBest('quiz');
 
+            const flashContent = newcontentList?.content ?? null;
+            const quizContent = newcontentListQuiz?.content;
             const result = {
                 notes: notes,
-                flashCard: (newcontentList === undefined || !newcontentList.content)
-    ? null
-    : newcontentList.content,
-                quiz: (newcontentListQuiz === undefined || !newcontentListQuiz.content || !newcontentListQuiz.content.questions)
-    ? null
-    : newcontentListQuiz.content.questions,
+                flashCard: flashContent,
+                quiz: quizContent
+                    ? (Array.isArray(quizContent) ? quizContent : quizContent.questions ?? quizContent)
+                    : null,
                 qa: null
             };
 
